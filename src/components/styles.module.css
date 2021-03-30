@@ -1,0 +1,29 @@
+.constructor {
+    margin: 50px 200px 50px;
+    display: grid;
+    grid-template-areas: "l r";
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 20px;
+
+
+}
+.changeName input {
+    margin: 15px;
+}
+
+.newElementInputs {
+    display: grid;
+    grid-template-areas: "l r";
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 10px;
+
+}
+.newElementInputs input {
+    margin: 5px;
+}
+.newElementInputs div {
+    margin: 10px;
+}
+.addButton {
+    margin: 5px;
+}
