@@ -11,11 +11,24 @@ import {compose} from "redux";
 import {connect} from "react-redux";
 import {
     addCount,
-    AddRowAction, deleteCount, deleteRow, editName, SaveEditName, setEditMode, setEditModeName, updateNewCount,
-    updateNewName, updateNewPrice, updateTotal
+    AddRowAction,
+    deleteCount,
+    deleteRow,
+    editName,
+    SaveEditName, SaveEditPrice,
+    setEditMode,
+    setEditModeId, setEditModeIdPrice,
+    setEditModeName, setEditModePrice, setListDescDown, setListDescUp, setListPriceDown, setListPriceUp,
+    updateNewCount,
+    updateNewName,
+    updateNewPrice,
+    updateRows,
+    updateTotal,
+    updateTotalCount
 } from "../redux/items-reducer";
 import {Button, Card} from "react-bootstrap";
 import s from './styles.module.css';
+import {Field, Form} from "react-final-form";
 
 
 const useStyles = makeStyles({
@@ -24,9 +37,8 @@ const useStyles = makeStyles({
     },
 });
 
-function subtotal(items) {
-    return items.map(({price}) => price).reduce((sum, i) => sum + i, 0);
-}
+
+
 
 let ItemsTable = (props) => {
 
@@ -68,33 +80,69 @@ let ItemsTable = (props) => {
         let text = newEditNameElement.current.value
         props.editName(text)
     }
-    let saveEditName = (id) => {
+    let saveEditName = (id, name) => {
         if (props.editMode)
-            props.SaveEditName(id, props.name)
-    }
-    let addCount = (id, count, total) => {
-        props.addCount(id, count, total)
+            props.SaveEditName(id, name)
     }
     let deleteCount = (id, count, total) => {
         props.deleteCount(id, count, total)
     }
 
-    let total = subtotal(props.rows)
-
-
     useEffect(() => {
 
-        props.updateTotal(total);
+        props.updateTotal();
+
 
     },);
+    const onSubmit = (values) => {
+        props.updateNewName(values.username)
+        props.updateNewCount(values.password)
+        props.updateNewPrice(values.confirm)
+        props.AddRowAction(props.newItemName, props.newItemCount, props.newItemPrice)
+    }
+    const onSubmitDesc = (values) => {
+        props.updateNewName(values.changeDesc)
+        saveEditName()
+    }
+     const onSubmitPrice = (values) => {
+            props.updateNewPrice(values.changePrice)
+            saveEditName()
+        }
 
 
-    return (<div>
+
+    return (<div className={s.wrapper}>
+
+           
+            <div>
             <TableContainer component={Paper}>
+
                 <Table className={classes.table} aria-label="spanning table">
                     <TableHead>
                         <TableRow>
-                            <TableCell>id</TableCell>
+                            <TableCell>Упорядочить по</TableCell>
+                            <TableCell><button type="button" class="btn btn-outline-secondary btn-sm" onClick={() => {
+                                props.setListDescUp()
+                                props.updateRows()
+                            }}>Названию А-я</button><button type="button" class="btn btn-outline-secondary btn-sm" onClick={() => {
+                                props.setListDescDown()
+                                props.updateRows()
+                            }} >Названию Я-а</button></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell><button type="button" class="btn btn-outline-secondary btn-sm" onClick={() => {
+                                props.setListPriceDown()
+                                props.updateRows()
+                            }}>Цене: убыванию</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onClick={() => {
+                                props.setListPriceUp()
+                                props.updateRows()
+                            }}>Цене: возрастанию</button></TableCell>
+                            <TableCell></TableCell>
+
+
+                        </TableRow>
+                        <TableRow>
+                            <TableCell >id</TableCell>
                             <TableCell>Название</TableCell>
                             <TableCell align="right">Количетсво</TableCell>
                             <TableCell align="right">Цена за 1 единицу</TableCell>
@@ -103,35 +151,127 @@ let ItemsTable = (props) => {
                     </TableHead>
                     <TableBody>
                         {props.rows.map((row) => (
-
-                            <TableRow key={row.desc}>
+                            <TableRow key={row.id}>
                                 <TableCell>{row.id}</TableCell>
-                                <TableCell>{row.desc}</TableCell>
-                                <TableCell align="right"><Button variant="outline-danger" size="sm"
-                                                                 onClick={
-                                                                     () => {
-                                                                         if (row.count > 0) {
-                                                                             deleteCount(row.id, row.count - 1, row.count * row.price)
-                                                                         }
+                                <TableCell>
+                                    {(props.editMode == true) && (props.editModeId == row.id)
+                                        ? <Form
+                                            onSubmit={onSubmitDesc}
+                                            validate={values => {
+                                                const errors = {}
+                                                if (!values.changeDesc) {
+                                                    errors.changeDesc = 'Вы не ввели название.'
+                                                }
+                                                return errors
+                                            }}
+                                            render={({ handleSubmit, form, submitting, pristine, values }) => (
+                                                <form onSubmit={handleSubmit}>
+                                                    <Field name="changeDesc">
+                                                        {({ input, meta }) => (
+                                                            <span>
+                                                            <span>
+                                                                <input className={s.Inputs} {...input} type="text" placeholder={row.desc} />
+                                                                {meta.error && meta.touched && <div className={s.validate}>{meta.error}</div>}
+                                                            </span>
+                                                            <button className={s.changeButtons} onClick={() => {
+                                                                saveEditName(row.id, values.changeDesc)
+                                                                props.setEditMode(false)
+                                                                }
+                                                            } type="submit" disabled={submitting || pristine}>
+                                                            ✔
+                                                            </button>
+                                                                <button className={s.changeButtons} onClick={() => {
+                                                                props.setEditMode(false)
+                                                            }
+                                                            }>
+                                                                ×
+                                                            </button>
+                                                            </span>
+                                                        )}
+                                                    </Field>
 
-                                                                     }}
-                                > - </Button> {row.count} <Button variant="outline-success" size="sm" onClick={
+                                                </form>
+                                            )}
+                                        />
+                                        : <a className={s.desc} title={"Нажмите чтобы изменить"} onClick={() => {
+                                            editModeOn(true)
+                                            props.setEditModeId(row.id)
+                                        }}>
+                                            {row.desc}
+                                        </a>
+                                    }
+                                </TableCell>
+
+
+                                <TableCell >
+                                    <button className={s.floatingButtonRed}
+                                            onClick={
+                                                () => {
+                                                    if (row.count > 0) {
+                                                        deleteCount(row.id, row.count - 1)
+                                                        props.updateTotalCount(row.id)
+                                                    }
+
+                                                }}
+                                    >-</button> {row.count} <button className={s.floatingButtonGreen} onClick={
                                     () => {
-                                        addCount(row.id, row.count + 1, row.count * row.price)
+                                        props.addCount(row.id, row.count + 1)
+                                        props.updateTotalCount(row.id)
 
-                                    }}> + </Button></TableCell>
+                                    }}>+</button></TableCell>
 
-                                <TableCell align="right">{row.price}</TableCell>
+                                <TableCell align="right">{(props.editModePrice == true) && (props.editModeIdPrice == row.id) ?
+                                    <Form
+                                        onSubmit={onSubmitPrice}
+                                        validate={values => {
+                                            const errors = {}
+                                            if (!values.changePrice) {
+                                                errors.changePrice = 'Вы не ввели цену.'
+                                            }
+                                            return errors
+                                        }}
+                                        render={({ handleSubmit, form, submitting, pristine, values }) => (
+                                            <form onSubmit={handleSubmit}>
+                                                <Field name="changePrice">
+                                                    {({ input, meta }) => (
+                                                        <span>
+                                                            <span>
+                                                                <input className={s.Inputs} {...input} type="text" placeholder={row.price} />
+                                                                {meta.error && meta.touched && <div className={s.validate}>{meta.error}</div>}
+                                                            </span>
+                                                            <button className={s.changeButtons} onClick={() => {
+                                                                props.SaveEditPrice(row.id, values.changePrice)
+                                                                props.updateTotalCount(row.id)
+                                                                props.setEditModePrice(false)
+                                                            }
+                                                            } type="submit" disabled={submitting || pristine}>
+                                                           ✔
+                                                            </button> <button className={s.changeButtons} onClick={() => {
+                                                            props.setEditModePrice(false)
+                                                        }
+                                                        }>
+                                                                ×
+                                                            </button>
+                                                            </span>
+                                                    )}
+                                                </Field>
+
+                                            </form>
+                                        )}
+                                    />
+                                    :
+                                    <a className={s.desc} onClick={() => {
+                                    props.setEditModePrice(true)
+                                    props.setEditModeIdPrice(row.id)
+                                }
+                                }> {row.price}</a>}</TableCell>
+
+
                                 <TableCell align="right">{row.total.toFixed(2)}</TableCell>
+                                <div className={s.deleteButtonDiv}><a className={s.deleteButton}  onClick={() => {
+                                    onDeleteItem(row.id)
 
-
-                                <Button variant="outline-danger" onClick={() => {
-                                    onDeleteItem(row.desc)
-
-                                }}>Удалить товар</Button>
-                                {props.editMode ? <Button variant="outline-success" onClick={() => {
-                                    saveEditName(row.id)
-                                }}>Сохранить название</Button> : ""}
+                                }}>🗑</a></div>
                             </TableRow>
                         ))}
 
@@ -144,56 +284,76 @@ let ItemsTable = (props) => {
                     </TableBody>
                 </Table>
             </TableContainer>
+        </div>
             <div className={s.constructor}>
-                <div className={s.changeName}>
-                    {props.editMode ? "" : <Button variant="outline-info" onClick={() => {
-                        editModeOn(true)
-
-                    }}>Изменить название</Button>}
-                    {props.editMode
-                        ?
-                        <div>
-                            Введите новое название, затем нажмите
-                            "Сохранить название" рядом с элементом
-                            которому хотите изменить название: <input onChange={onEditName} ref={newEditNameElement}/>
-                            <br/>
-                            <Button size="sm" variant="outline-info" onClick={() => {
-                                editModeOn(false)
-                            }}> Отмена </Button>
-
-                        </div>
-                        : ""}
+                <Form
+                        onSubmit={onSubmit}
+                        validate={values => {
+                            const errors = {}
+                            if (!values.username) {
+                                errors.username = 'Вы не ввели название.'
+                            }
+                            if (!values.password) {
+                                errors.password = 'Вы не ввели количетсво.'
+                            }
+                            if (isNaN(values.password)) {
+                                errors.password = 'Нельзя вводить текст'
+                            }
+                            if (!values.confirm) {
+                                errors.confirm = 'Вы не ввели цену.'
+                            }
+                            if (isNaN(values.confirm)) {
+                                errors.confirm = 'Нельзя вводить текст'
+                            }
+                            return errors
+                        }}
+                        render={({ handleSubmit, form, submitting, pristine, values }) => (
+                            <form onSubmit={handleSubmit}>
+                                <Field name="username">
+                                    {({ input, meta }) => (
+                                        <div>
+                                            <input className={s.Inputs} {...input} type="text" placeholder="Введите название" />
+                                            {meta.error && meta.touched && <div className={s.validate}>{meta.error}</div>}
+                                        </div>
+                                    )}
+                                </Field>
+                                <Field name="password">
+                                    {({ input, meta }) => (
+                                        <div>
+                                            <input className={s.Inputs} {...input} type="text" placeholder="Введите количество" />
+                                            {meta.error && meta.touched && <div className={s.validate}>{meta.error}</div>}
+                                        </div>
+                                    )}
+                                </Field>
+                                <Field name="confirm">
+                                    {({ input, meta }) => (
+                                        <div>
+                                            <input className={s.Inputs} {...input} type="text" placeholder="Введите цену" />
+                                            {meta.error && meta.touched && <div className={s.validate}>{meta.error}</div>}
+                                        </div>
+                                    )}
+                                </Field>
+                                <div className="buttons">
+                                    <Button type="submit" disabled={submitting}>
+                                        Добавить товар
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={form.reset}
+                                        disabled={submitting || pristine}
+                                    >
+                                        Очистить
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
+                    />
                 </div>
-                <div>
-                    {props.editModeName ? <div className={s.newElementInputs}>
-                        <div>
-                            <div>Введите название:</div>
-                            <div>Введите количество:</div>
-                            <div>Введите цену:</div>
-                        </div>
-                        <div>
-                            <input onChange={onNameChange} ref={newNameElement}/>
-                            <input onChange={onCountChange} ref={newCountElement}/>
-                            <input onChange={onPriceChange} ref={newPriceElement}/>
-
-                        </div>
-                    </div> : ""}
-                    <div>
-                        {props.editModeName ? <div>
-                                <Button className={s.addButton} size="sm" variant="outline-success" onClick={() => {
-                                    onAddItem()
-                                }}>Добавить</Button>
-                                <Button size="sm" variant="outline-info" onClick={() => {
-                                    props.setEditModeName(false)
-                                }}>Отмена</Button></div> :
-                            <Button variant="outline-info" onClick={() => {
-                                props.setEditModeName(true)
-
-                            }}>Добавить товар</Button>}</div>
-                </div>
 
 
-            </div>
+
+
+
         </div>
     );
 
@@ -203,6 +363,7 @@ let mapStateToProps = (state) => ({
     items: state.itemsPage.items,
     newItemText: state.itemsPage.newItemText,
     rows: state.itemsPage.rows,
+    rows2: state.itemsPage.rows2,
     newItemPrice: state.itemsPage.newItemPrice,
     newItemName: state.itemsPage.newItemName,
     newItemCount: state.itemsPage.newItemCount,
@@ -210,6 +371,9 @@ let mapStateToProps = (state) => ({
     editMode: state.itemsPage.editMode,
     name: state.itemsPage.name,
     editModeName: state.itemsPage.editModeName,
+    editModeId: state.itemsPage.editModeId,
+    editModeIdPrice: state.itemsPage.editModeIdPrice,
+    editModePrice: state.itemsPage.editModePrice,
 
 
 })
@@ -217,7 +381,9 @@ export default compose(
     connect(mapStateToProps, {
         AddRowAction, updateNewName, updateNewCount,
         updateNewPrice, updateTotal, deleteRow, setEditMode, editName, SaveEditName, addCount,
-        deleteCount, setEditModeName
+        deleteCount, setEditModeName, updateRows, updateTotalCount, setEditModeId,
+        setEditModeIdPrice, SaveEditPrice, setEditModePrice, setListPriceUp,
+        setListPriceDown, setListDescUp, setListDescDown
     })
 )(ItemsTable);
 

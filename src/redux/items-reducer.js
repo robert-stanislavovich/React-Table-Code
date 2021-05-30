@@ -12,6 +12,16 @@ const SAVE_EDIT_NAME = 'SAVE_EDIT_NAME';
 const ADD_COUNT = 'ADD_COUNT';
 const DELETE_COUNT = 'DELETE_COUNT';
 const EDIT_NAME = 'EDIT_NAME';
+const UPDATE_ROWS = 'UPDATE_ROWS';
+const UPDATE_TOTAL = 'UPDATE_TOTAL';
+const SET_EDIT_MODE_ID = 'SET_EDIT_MODE_ID';
+const SET_EDIT_MODE_ID_PRICE = 'SET_EDIT_MODE_ID_PRICE';
+const SAVE_EDIT_PRICE = 'SAVE_EDIT_PRICE';
+const SET_EDIT_MODE_PRICE = 'SET_EDIT_MODE_PRICE';
+const SET_LIST_PRICE_UP = 'SET_LIST_PRICE_UP';
+const SET_LIST_PRICE_DOWN = 'SET_LIST_PRICE_DOWN';
+const SET_LIST_DESC_UP = 'SET_LIST_DESC_UP';
+const SET_LIST_DESC_DOWN = 'SET_LIST_DESC_DOWN';
 
 
 let initialState = {
@@ -20,15 +30,28 @@ let initialState = {
     newItemCount: 0,
     newItemPrice: 1,
     rows: [
-        createRow(1, 'Компьютер', 3, 11.15),
-        createRow(2, 'Телевизор', 4, 45.99),
-        createRow(3, 'Холодильник', 2, 17.99),
-        createRow(4, 'Ноутбук', 2, 11.99),
+        createRow(1, 'Компьютер', 3, 2157),
+        createRow(2, 'Телевизор', 4, 2485),
+        createRow(3, 'Холодильник', 2, 1634),
+        createRow(4, 'Ноутбук', 2, 3186),
+        createRow(5, 'Пылесос', 2, 386),
+        createRow(6, 'Наушники', 5, 138),
+    ],
+    rows2: [
+        {id: 1, name: 'Компьютер', count: 3, price: 2157},
+        {id: 2, name: 'Телевизор', count: 4, price: 2485},
+        {id: 3, name: 'Холодильник', count: 2, price: 1634},
+        {id: 4, name: 'Ноутбук', count: 2, price: 3186},
+        {id: 5, name: 'Пылесос', count: 21, price: 386},
+        {id: 6, name: 'Наушники', count: 5, price: 138}
     ],
     total: null,
     editMode: false,
+    editModeId: false,
     name: null,
     editModeName: false,
+    editModeIdPrice: false,
+    editModePrice: false,
 
 
 };
@@ -82,7 +105,7 @@ const itemsReducer = (state = initialState, action) => {
         case UPDATE_NEW_ITEM_COUNT: {
             return {
                 ...state,
-                newItemCount: action.text
+                newItemCount: parseInt(action.text)
             }
         }
         case UPDATE_NEW_ITEM_PRICE: {
@@ -101,7 +124,7 @@ const itemsReducer = (state = initialState, action) => {
 
             return {
                 ...state,
-                rows: state.rows.filter(item => item.desc !== action.desc)
+                rows: state.rows.filter(item => item.id !== action.desc)
             }
         }
 
@@ -120,6 +143,18 @@ const itemsReducer = (state = initialState, action) => {
             return {
                 ...state,
                 editMode: action.mode
+            }
+        }
+        case SET_EDIT_MODE_PRICE: {
+            return {
+                ...state,
+                editModePrice: action.mode
+            }
+        }
+        case SET_EDIT_MODE_ID: {
+            return {
+                ...state,
+                editModeId: action.id
             }
         }
         case EDIT_NAME: {
@@ -149,35 +184,149 @@ const itemsReducer = (state = initialState, action) => {
                 rows: changedRows
             }
         }
-        case ADD_COUNT: {
-
-            let change = (id, count, total) => {
+        case SAVE_EDIT_PRICE: {
+            let change = (id, price) => {
                 return state.rows.map(obj => {
                     if (obj.id === id) {
-                        return {...obj, id, count, total}
+                        return {...obj, id, price}
                     }
                     return obj;
                 });
             }
-            let changedRows = change(action.id, action.count, action.total)
+            let changedRows = change(action.id, action.price)
             return {
                 ...state,
                 rows: changedRows
             }
         }
-        case DELETE_COUNT: {
-            let change = (id, count, total) => {
+        case ADD_COUNT: {
+
+            let change = (id, count) => {
                 return state.rows.map(obj => {
+
                     if (obj.id === id) {
-                        return {...obj, id, count, total}
+                        return {...obj, id, count}
                     }
                     return obj;
                 });
             }
-            let changedRows = change(action.id, action.count, action.total)
+            let changedRows = change(action.id, action.count)
             return {
                 ...state,
                 rows: changedRows
+            }
+        }
+        case UPDATE_TOTAL: {
+
+            let change = (id) => {
+                return state.rows.map(obj => {
+                    let total = obj.count*obj.price
+                    if (obj.id === id) {
+                        return {...obj, id, total}
+                    }
+                    return obj;
+                });
+            }
+            let changedRows = change(action.id)
+            return {
+                ...state,
+                rows: changedRows
+            }
+        }
+
+        case DELETE_COUNT: {
+            let change = (id, count) => {
+                return state.rows.map(obj => {
+                    if (obj.id === id) {
+                        return {...obj, id, count}
+                    }
+                    return obj;
+                });
+            }
+            let changedRows = change(action.id, action.count)
+            return {
+                ...state,
+                rows: changedRows
+            }
+        }
+        case UPDATE_ROWS: {
+            return {
+                ...state,
+                rows: state.rows.map(r => {return r})
+            }
+        }
+        case SET_EDIT_MODE_ID_PRICE: {
+            return {
+                ...state,
+                editModeIdPrice: action.id
+            }
+        }
+        case SET_LIST_PRICE_UP: {
+            let list = () => {
+                return state.rows.sort(function (a, b) {
+                    if (a.price > b.price) {
+                        return 1;
+                    }
+                    if (a.price < b.price) {
+                        return -1;
+                    }
+                    // a должно быть равным b
+                    return 0;
+                }
+                )
+                }
+            return {
+                ...state,
+                rows: list()
+
+            }
+        }
+        case SET_LIST_PRICE_DOWN: {
+            let list = () => {
+                return state.rows.sort(function (a, b) {
+                        if (a.price > b.price) {
+                            return -1;
+                        }
+                        if (a.price < b.price) {
+                            return 1;
+                        }
+                        // a должно быть равным b
+                        return 0;
+                    }
+                )
+            }
+            return {
+                ...state,
+                rows: list()
+
+            }
+        }
+        case SET_LIST_DESC_UP: {
+            let list = () => {
+                return state.rows.sort(function (a, b) {
+
+                        return a.desc.localeCompare(b.desc);
+                    }
+                )
+            }
+            return {
+                ...state,
+                rows: list()
+
+            }
+        }
+        case SET_LIST_DESC_DOWN: {
+            let list = () => {
+                return state.rows.sort(function (a, b) {
+
+                        return b.desc.localeCompare(a.desc);
+                    }
+                )
+            }
+            return {
+                ...state,
+                rows: list()
+
             }
         }
 
@@ -201,18 +350,38 @@ export const deleteRow = (desc) =>
     ({type: DELETE_ROW, desc})
 export const setEditMode = (mode) =>
     ({type: SET_EDIT_MODE, mode})
+export const setEditModePrice = (mode) =>
+    ({type: SET_EDIT_MODE_PRICE, mode})
+export const setEditModeId = (id) =>
+    ({type: SET_EDIT_MODE_ID, id})
+export const setEditModeIdPrice = (id) =>
+    ({type: SET_EDIT_MODE_ID_PRICE, id})
 export const setEditModeName = (mode) =>
     ({type: EDIT_NAME, mode})
 export const editName = (name) =>
     ({type: SET_EDIT_NAME, name})
 export const SaveEditName = (id, name) =>
     ({type: SAVE_EDIT_NAME, id, name})
-export const addCount = (id, count, total) =>
-    ({type: ADD_COUNT, id, count, total})
-export const deleteCount = (id, count, total) =>
-    ({type: DELETE_COUNT, id, count, total})
+export const SaveEditPrice = (id, price) =>
+    ({type: SAVE_EDIT_PRICE, id, price})
+export const addCount = (id, count) =>
+    ({type: ADD_COUNT, id, count})
+export const updateTotalCount = (id) =>
+    ({type: UPDATE_TOTAL, id})
+export const deleteCount = (id, count) =>
+    ({type: DELETE_COUNT, id, count})
 export const AddRowAction = (desc, count, price) =>
     ({type: ADD_ROW, desc, count, price})
+export const updateRows = () =>
+    ({type: UPDATE_ROWS})
+export const setListPriceUp = () =>
+    ({type: SET_LIST_PRICE_UP})
+export const setListPriceDown = () =>
+    ({type: SET_LIST_PRICE_DOWN})
+export const setListDescUp = () =>
+    ({type: SET_LIST_DESC_UP})
+export const setListDescDown = () =>
+    ({type: SET_LIST_DESC_DOWN})
 
 
 export default itemsReducer;
